@@ -1,8 +1,8 @@
 'use client';
 
-import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { useRouter } from '@/navigation';
-import { useState } from 'react';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { useEffect, useState } from 'react';
 
 import { useTranslations } from 'next-intl';
 
@@ -10,18 +10,19 @@ import Navbar from '@/components/Layout/Navbar';
 import { InfoCopy } from '@/components/UI';
 import { Button, Container, Divider, Flex, Label, Text, ToggleSwitch } from '@lawallet/ui';
 
-import { CACHE_BACKUP_KEY } from '@/constants/constants';
 import { appTheme } from '@/config/exports';
-import { useConfig, useWalletContext } from '@lawallet/react';
+import { getUserStoragedKey } from '@/utils';
+import { CACHE_BACKUP_KEY } from '@/utils/constants';
+import { useConfig, useIdentity } from '@lawallet/react';
 
 export default function Page() {
   const t = useTranslations();
   const config = useConfig();
   const router: AppRouterInstance = useRouter();
 
-  const {
-    account: { identity },
-  } = useWalletContext();
+  const [userStoragedKey, setUserStoragedKey] = useState<string>('');
+
+  const identity = useIdentity();
   const [switchOne, setSwitchOne] = useState<boolean>(false);
   const [switchTwo, setSwitchTwo] = useState<boolean>(false);
 
@@ -30,6 +31,17 @@ export default function Page() {
   const handleShowRecovery = () => {
     if (switchOne || switchTwo) setShowRecovery(true);
   };
+
+  const loadStoragedKey = async () => {
+    const storagedKey = await getUserStoragedKey(config.storage);
+    if (!storagedKey) return;
+
+    setUserStoragedKey(storagedKey);
+  };
+
+  useEffect(() => {
+    loadStoragedKey();
+  }, []);
 
   return (
     <>
@@ -40,9 +52,9 @@ export default function Page() {
           <Container size="small">
             <InfoCopy
               title={t('PRIVATE_KEY')}
-              value={identity.data.privateKey}
-              onCopy={() => {
-                config.storage.setItem(`${CACHE_BACKUP_KEY}_${identity.data.hexpub}`, '1');
+              value={userStoragedKey}
+              onCopy={async () => {
+                await config.storage.setItem(`${CACHE_BACKUP_KEY}_${identity.pubkey}`, '1');
               }}
             />
             <Divider y={16} />

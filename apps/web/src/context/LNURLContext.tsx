@@ -4,10 +4,10 @@ import {
   escapingBrackets,
   normalizeLNDomain,
   useConfig,
+  useIdentity,
   useLNURL,
-  useNostrContext,
+  useNostr,
   useTransfer,
-  useWalletContext,
 } from '@lawallet/react';
 import { requestInvoice } from '@lawallet/react/actions';
 import { LNURLTransferType, TransferTypes } from '@lawallet/react/types';
@@ -16,7 +16,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 // Constans
-import { EMERGENCY_LOCK_TRANSFER } from '@/constants/constants';
+import { EMERGENCY_LOCK_TRANSFER } from '@/utils/constants';
 
 interface ILNURLContext {
   LNURLTransferInfo: LNURLTransferType;
@@ -33,22 +33,20 @@ const LNURLContext = createContext({} as ILNURLContext);
 
 export function LNURLProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const {
-    account: { identity, balance },
-  } = useWalletContext();
 
-  if (EMERGENCY_LOCK_TRANSFER || balance.amount === 0) {
+  if (EMERGENCY_LOCK_TRANSFER) {
     router.push('/dashboard');
     return null;
   }
 
   const params = useSearchParams();
   const config = useConfig();
+  const identity = useIdentity();
 
   const [LNURLTransferInfo, setLNURLTransferInfo] = useState<LNURLTransferType>(defaultLNURLTransfer);
 
   const { LNURLInfo, decodeLNURL } = useLNURL({ lnurlOrAddress: LNURLTransferInfo.data, config });
-  const { signerInfo, signer, encrypt } = useNostrContext();
+  const { signerInfo, signer, encrypt } = useNostr();
 
   const {
     isLoading,
@@ -78,7 +76,6 @@ export function LNURLProvider({ children }: { children: React.ReactNode }) {
 
   const defineMetadata = async (receiver: string): Promise<NDKTag> => {
     const showReceiver: boolean = Boolean(receiver.length && !receiver.toLowerCase().startsWith('lnurl'));
-    const showSender: boolean = Boolean(identity.data.username.length);
 
     const receiverInfo: string =
       showReceiver && LNURLInfo.transferInfo.data.includes('@')
@@ -87,9 +84,9 @@ export function LNURLProvider({ children }: { children: React.ReactNode }) {
 
     const metadataMessage: { sender?: string; receiver?: string } = {
       ...(showReceiver ? { receiver: receiverInfo } : {}),
-      ...(showSender
+      ...(identity.lud16
         ? {
-            sender: `${identity.data.username}@${normalizeLNDomain(config.endpoints.lightningDomain)}`,
+            sender: identity.lud16,
           }
         : {}),
     };

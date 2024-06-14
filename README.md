@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://wagmi.sh">
+  <a href="https://lawallet.io">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/feririarte10/la-wallet-monorepo/f5bc158462e03647bbfbe72357e810f2bc8d9a73/apps/docs/public/logo-dark.svg">
       <img alt="la wallet logo" src="https://raw.githubusercontent.com/feririarte10/la-wallet-monorepo/f5bc158462e03647bbfbe72357e810f2bc8d9a73/apps/docs/public/logo-light.svg" width="auto" height="60">
@@ -35,5 +35,4 @@ For instructions per application or package, see the README published for each a
 | Folder      | Contents                                                                      |
 | ----------- | ----------------------------------------------------------------------------- |
 | `apps/`     | The home for each standalone application.                                     |
-| `config/`   | Shared infrastructure packages and configurations.                            |
 | `packages/` | Shared code packages covering UI, shared functionality, and shared utilities. |

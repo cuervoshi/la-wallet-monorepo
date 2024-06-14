@@ -1,13 +1,12 @@
 import { TokenList } from '@/components/TokenList';
-import { Confetti, Keyboard, QRCode } from '@/components/UI';
+import { Confetti, QRCode } from '@/components/UI';
 import { appTheme } from '@/config/exports';
-import { MAX_INVOICE_AMOUNT } from '@/constants/constants';
 import { useActionOnKeypress } from '@/hooks/useActionOnKeypress';
 import useErrors from '@/hooks/useErrors';
-import { useNumpad } from '@/hooks/useNumpad';
 import { useRouter } from '@/navigation';
+import { MAX_INVOICE_AMOUNT } from '@/utils/constants';
 import { SatoshiV2Icon } from '@bitcoin-design/bitcoin-icons-react/filled';
-import { useFormatter, useWalletContext, useZap } from '@lawallet/react';
+import { useCurrencyConverter, useFormatter, useIdentity, useNumpad, useSettings, useZap } from '@lawallet/react';
 import { AvailableLanguages } from '@lawallet/react/types';
 import {
   BtnLoader,
@@ -19,6 +18,7 @@ import {
   Flex,
   Heading,
   Icon,
+  Keyboard,
   Sheet,
   Text,
 } from '@lawallet/ui';
@@ -38,16 +38,14 @@ const InvoiceSheet = ({ isOpen, handleCopy, onClose }: InvoiceSheetTypes) => {
 
   const t = useTranslations();
   const lng = useLocale();
+  const identity = useIdentity();
 
   const {
-    account: { identity },
-    settings: {
-      props: { currency },
-    },
-    converter: { convertCurrency },
-  } = useWalletContext();
+    props: { currency },
+  } = useSettings();
+  const { convertCurrency } = useCurrencyConverter();
 
-  const { invoice, createZapInvoice, resetInvoice } = useZap({ receiverPubkey: identity.data.hexpub });
+  const { invoice, createZapInvoice, resetInvoice } = useZap({ receiverPubkey: identity.pubkey });
 
   const { formatAmount } = useFormatter({ currency, locale: lng as AvailableLanguages });
 
@@ -81,7 +79,7 @@ const InvoiceSheet = ({ isOpen, handleCopy, onClose }: InvoiceSheetTypes) => {
   };
 
   const handleCloseSheet = () => {
-    if (sheetStep === 'finished' || !identity.data.username.length) {
+    if (sheetStep === 'finished' || !identity.username.length) {
       router.push('/dashboard');
     } else {
       numpadData.resetAmount();
@@ -106,7 +104,7 @@ const InvoiceSheet = ({ isOpen, handleCopy, onClose }: InvoiceSheetTypes) => {
       title={
         sheetStep === 'amount' ? t('DEFINE_AMOUNT') : sheetStep === 'qr' ? t('WAITING_PAYMENT') : t('PAYMENT_RECEIVED')
       }
-      isOpen={isOpen || !identity.data.username.length}
+      isOpen={isOpen || !identity.username.length}
       closeText={t('CLOSE')}
       onClose={handleCloseSheet}
     >

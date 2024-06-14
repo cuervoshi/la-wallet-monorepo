@@ -2,29 +2,32 @@
 import Logo from '@/components/Logo';
 import { Loader } from '@lawallet/ui';
 
+import { StoragedIdentityInfo } from '@/components/AppProvider/AuthProvider';
 import { appTheme } from '@/config/exports';
 import useErrors from '@/hooks/useErrors';
-import { buildCardActivationEvent, useConfig, useWalletContext } from '@lawallet/react';
-import { cardResetCaim, generateUserIdentity } from '@lawallet/react/actions';
+import { saveIdentityToStorage } from '@/utils';
+import { buildCardActivationEvent, useConfig, useIdentity, useNostr } from '@lawallet/react';
+import { cardResetCaim } from '@lawallet/react/actions';
 import { Container, Feedback, Flex, Heading, Text } from '@lawallet/ui';
 import { NostrEvent } from '@nostr-dev-kit/ndk';
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { generatePrivateKey, getPublicKey } from 'nostr-tools';
 import { useEffect } from 'react';
 
 export default function Page() {
   const t = useTranslations();
-  const {
-    account: { identity },
-  } = useWalletContext();
+  const identity = useIdentity();
 
   const config = useConfig();
   const router = useRouter();
   const errors = useErrors();
   const params = useSearchParams();
 
+  const { initializeSigner } = useNostr();
+
   useEffect(() => {
-    if (identity.data.hexpub.length) return;
+    if (identity.pubkey.length) return;
 
     const recoveryNonce: string = params.get('n') || '';
     if (!recoveryNonce) {
@@ -32,23 +35,31 @@ export default function Page() {
       return;
     }
 
-    generateUserIdentity().then((generatedIdentity) => {
-      buildCardActivationEvent(recoveryNonce, generatedIdentity.privateKey, config)
-        .then((cardEvent: NostrEvent) => {
-          cardResetCaim(cardEvent, config).then((res) => {
-            if (res.error) errors.modifyError(res.error);
+    const randomHexPKey: string = generatePrivateKey();
+    buildCardActivationEvent(recoveryNonce, randomHexPKey, config)
+      .then((cardEvent: NostrEvent) => {
+        cardResetCaim(cardEvent, config).then((res) => {
+          if (res.error) errors.modifyError(res.error);
 
-            if (res.name) {
-              identity
-                .initializeCustomIdentity(generatedIdentity.privateKey, res.name)
-                .then(() => router.push('/dashboard'));
-            } else {
-              errors.modifyError('ERROR_ON_RESET_ACCOUNT');
-            }
-          });
-        })
-        .catch(() => router.push('/'));
-    });
+          if (res.name) {
+            identity.initializeFromPrivateKey(randomHexPKey, res.name).then(() => {
+              const identityToSave: StoragedIdentityInfo = {
+                username: res.name,
+                pubkey: getPublicKey(randomHexPKey),
+                privateKey: randomHexPKey,
+              };
+
+              saveIdentityToStorage(config.storage, identityToSave).then(() => {
+                initializeSigner(identity.signer);
+                router.push('/dashboard');
+              });
+            });
+          } else {
+            errors.modifyError('ERROR_ON_RESET_ACCOUNT');
+          }
+        });
+      })
+      .catch(() => router.push('/'));
   }, []);
 
   return (

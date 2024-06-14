@@ -1,8 +1,5 @@
 import { styled } from 'styled-components';
-
 import { AccordionPrimitiveProps, AccordionContentProps, AccordionTriggerPrimitiveProps } from './types';
-
-import { baseTheme } from '../../theme';
 
 export const AccordionPrimitive = styled.div<AccordionPrimitiveProps>`
   width: 100%;

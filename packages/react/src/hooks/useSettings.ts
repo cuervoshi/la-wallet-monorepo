@@ -2,22 +2,27 @@ import { type UserConfigProps, type AvailableCurrencies } from '@lawallet/utils/
 import { parseContent, defaultUserConfig } from '@lawallet/utils';
 import * as React from 'react';
 import { useConfig } from './useConfig.js';
+import { useLaWallet } from '../context/WalletContext.js';
 
 export type UseSettingsReturns = {
-  props: UserConfigProps;
   loading: boolean;
+  props: UserConfigProps;
   toggleHideBalance: () => void;
   changeCurrency: (currency: AvailableCurrencies) => void;
 };
 
 export const useSettings = (): UseSettingsReturns => {
+  const context = useLaWallet();
+  const foundContext: boolean = Boolean(context && context.settings);
+  if (foundContext) return context.settings;
+
   const config = useConfig();
   const [loading, setLoading] = React.useState<boolean>(true);
   const [props, setProps] = React.useState<UserConfigProps>(defaultUserConfig);
 
-  const saveConfiguration = (newConfig: UserConfigProps) => {
+  const saveConfiguration = async (newConfig: UserConfigProps) => {
     setProps(newConfig);
-    config.storage.setItem('config', JSON.stringify(newConfig));
+    await config.storage.setItem('config', JSON.stringify(newConfig));
   };
 
   const toggleHideBalance = () =>
@@ -31,8 +36,9 @@ export const useSettings = (): UseSettingsReturns => {
       ...props,
       currency,
     });
-  const preloadConfig = () => {
-    const storagedConfig: string = config.storage.getItem('config') as string;
+
+  const preloadConfig = async () => {
+    const storagedConfig: string = (await config.storage.getItem('config')) as string;
     if (!storagedConfig) {
       setLoading(false);
       return;

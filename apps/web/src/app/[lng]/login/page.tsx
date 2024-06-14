@@ -1,11 +1,12 @@
 'use client';
 import { useRouter } from '@/navigation';
 
+import { StoragedIdentityInfo } from '@/components/AppProvider/AuthProvider';
 import Navbar from '@/components/Layout/Navbar';
-import { CACHE_BACKUP_KEY } from '@/constants/constants';
 import { useActionOnKeypress } from '@/hooks/useActionOnKeypress';
 import useErrors from '@/hooks/useErrors';
-import { useConfig, useWalletContext } from '@lawallet/react';
+import { saveIdentityToStorage } from '@/utils';
+import { useConfig, useIdentity, useNostr } from '@lawallet/react';
 import { getUsername } from '@lawallet/react/actions';
 import { Button, Container, Divider, Feedback, Flex, Heading, Textarea } from '@lawallet/ui';
 import { useTranslations } from 'next-intl';
@@ -13,9 +14,7 @@ import { getPublicKey } from 'nostr-tools';
 import { ChangeEvent, useState } from 'react';
 
 export default function Page() {
-  const {
-    account: { identity },
-  } = useWalletContext();
+  const { initializeSigner } = useNostr();
 
   const [keyInput, setKeyInput] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -24,6 +23,7 @@ export default function Page() {
   const config = useConfig();
   const router = useRouter();
   const errors = useErrors();
+  const identity = useIdentity();
 
   const handleChangeInput = (e: ChangeEvent<HTMLTextAreaElement>) => {
     errors.resetError();
@@ -39,8 +39,8 @@ export default function Page() {
     setLoading(true);
 
     try {
-      const hexpub: string = getPublicKey(keyInput);
-      const username: string = await getUsername(hexpub, config);
+      const pubkey: string = getPublicKey(keyInput);
+      const username: string = await getUsername(pubkey, config);
 
       if (!username.length) {
         errors.modifyError('NOT_FOUND_PUBKEY');
@@ -48,10 +48,18 @@ export default function Page() {
         return;
       }
 
-      identity.initializeCustomIdentity(keyInput, username).then((res) => {
+      identity.initializeFromPrivateKey(keyInput, username).then((res) => {
         if (res) {
-          config.storage.setItem(`${CACHE_BACKUP_KEY}_${hexpub}`, '1');
-          router.push('/dashboard');
+          const IdentityToSave: StoragedIdentityInfo = {
+            username,
+            pubkey,
+            privateKey: keyInput,
+          };
+
+          saveIdentityToStorage(config.storage, IdentityToSave, true).then(() => {
+            initializeSigner(identity.signer);
+            router.push('/dashboard');
+          });
         }
       });
     } catch (err) {

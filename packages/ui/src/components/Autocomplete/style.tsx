@@ -1,7 +1,5 @@
 import { styled } from 'styled-components';
 
-import { baseTheme } from '../../theme';
-
 import { AutocompletePrimitiveProps } from './types';
 
 export const AutocompletePrimitive = styled.div<AutocompletePrimitiveProps>`

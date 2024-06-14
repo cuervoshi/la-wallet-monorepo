@@ -2,8 +2,6 @@ import { styled } from 'styled-components';
 
 import { InputPrimitiveProps, FeedbackPrimitiveProps } from './types';
 
-import { baseTheme } from '../../theme';
-
 export const InputPrimitive = styled.input<InputPrimitiveProps>`
   flex: 1;
   min-height: 50px;

@@ -1,7 +1,5 @@
 import { styled } from 'styled-components';
 
-import { baseTheme } from '../../theme';
-
 import { BannerAlertPrimitiveProps } from './types';
 
 export const BannerAlertPrimitive = styled.div<BannerAlertPrimitiveProps>`

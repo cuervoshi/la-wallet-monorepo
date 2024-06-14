@@ -1,13 +1,12 @@
 import React from 'react';
 
-import { CheckIcon, AlertIcon } from '../Icons';
+import { AlertIcon, CheckIcon } from '../Icons';
 
 import { InputProps } from './types';
 
-import { baseTheme } from '../../theme';
-import { InputPrimitive, InputBox, InputIcon } from './style';
-import { BtnLoader } from '../Loader/Loader';
 import { useTheme } from 'styled-components';
+import { BtnLoader } from '../Loader/Loader';
+import { InputBox, InputIcon, InputPrimitive } from './style';
 
 export function Input(props: InputProps) {
   const theme = useTheme();
