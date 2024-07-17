@@ -9,7 +9,7 @@ import themeConfig from '../themeConfig.json';
 const storage = createStorage({
   storage: {
     async getItem(name) {
-      return get(name).then((val) => val).catch(() => localStorage.getItem(name))
+      return get(name).then((val) => val).catch(() => localStorage.getItem(name));
     },
     async setItem(name, value) {
       await set(name, value).catch(() => localStorage.setItem(name, value));
