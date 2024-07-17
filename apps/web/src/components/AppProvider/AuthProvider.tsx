@@ -52,7 +52,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loadIdentityFromStorage = async () => {
     try {
-      // If you have the identity saved in IndexedDB, we load from here.
       const storageIdentity = await config.storage.getItem(STORAGE_IDENTITY_KEY);
 
       if (storageIdentity) {
@@ -60,39 +59,40 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const auth: boolean = await authenticate(parsedIdentity[0]?.privateKey);
         return auth;
       } else {
-        // ******************************************
-        // PATCH: This code is used to facilitate the migration from localStorage to IndexedDB
-        // Date: 20/05/2024
-        // Remove this code after migrating the identity provider.
-        // ******************************************
-        const localStorageKey = localStorage.getItem(STORAGE_IDENTITY_KEY);
-        if (!localStorageKey) {
-          identity.reset();
-          setIsLoading(false);
-          return false;
-        }
+        identity.reset();
+        setIsLoading(false);
+        return false;
 
-        const parsedIdentity: StoragedIdentityInfo = parseContent(localStorageKey as string);
-        const auth: boolean = await authenticate(parsedIdentity.privateKey);
-
-        if (auth) {
-          const IdentityToSave: StoragedIdentityInfo[] = [
-            {
-              username: parsedIdentity?.username ?? '',
-              pubkey: parsedIdentity?.pubkey ?? '',
-              privateKey: parsedIdentity.privateKey,
-            },
-          ];
-
-          await config.storage.setItem(STORAGE_IDENTITY_KEY, JSON.stringify(IdentityToSave));
-        }
-        return auth;
-        // ******************************************
-        // After removing the patch, leave only this lines:
-        // identity.reset();
-        // setIsLoading(false);
-        // return false;
-        // ******************************************
+        // // ******************************************
+        // // PATCH: This code is used to facilitate the migration from localStorage to IndexedDB
+        // // Date: 20/05/2024
+        // // Remove this code after migrating the identity provider.
+        // // ******************************************
+        // const localStorageKey = localStorage.getItem(STORAGE_IDENTITY_KEY);
+        // if (!localStorageKey) {
+        //   identity.reset();
+        //   setIsLoading(false);
+        //   return false;
+        // }
+        // const parsedIdentity: StoragedIdentityInfo = parseContent(localStorageKey as string);
+        // const auth: boolean = await authenticate(parsedIdentity.privateKey);
+        // if (auth) {
+        //   const IdentityToSave: StoragedIdentityInfo[] = [
+        //     {
+        //       username: parsedIdentity?.username ?? '',
+        //       pubkey: parsedIdentity?.pubkey ?? '',
+        //       privateKey: parsedIdentity.privateKey,
+        //     },
+        //   ];
+        //   await config.storage.setItem(STORAGE_IDENTITY_KEY, JSON.stringify(IdentityToSave));
+        // }
+        // return auth;
+        // // ******************************************
+        // // After removing the patch, leave only this lines:
+        // // identity.reset();
+        // // setIsLoading(false);
+        // // return false;
+        // // ******************************************
       }
     } catch {
       setIsLoading(false);

@@ -1,6 +1,6 @@
 {
   "name": "lawallet-front",
-  "version": "0.6.5",
+  "version": "0.6.52",
   "prettier": "@lacrypta/prettier-config",
   "private": true,
   "scripts": {
@@ -22,7 +22,6 @@
     "@serwist/sw": "^8.4.4",
     "confetti-js": "^0.0.18",
     "date-fns": "^3.6.0",
-    "idb-keyval": "^6.2.1",
     "lottie-react": "^2.4.0",
     "negotiator": "^0.6.3",
     "next": "^14.2.3",
