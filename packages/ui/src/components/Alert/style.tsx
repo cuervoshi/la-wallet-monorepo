@@ -1,7 +1,4 @@
 import { styled } from 'styled-components';
-
-import { baseTheme } from '../../theme';
-
 import { AlertPrimitiveProps } from './types';
 
 export const AlertPrimitive = styled.div<AlertPrimitiveProps>`

@@ -1,10 +1,8 @@
 'use client';
 
 // Libraries
-import { useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { formatAddress, lnurl_encode, normalizeLNDomain, useConfig, useWalletContext } from '@lawallet/react';
 import { Button, Container, Divider, Flex, Text } from '@lawallet/ui';
+import { useMemo, useState } from 'react';
 
 // Theme
 import { appTheme } from '@/config/exports';
@@ -13,14 +11,16 @@ import { appTheme } from '@/config/exports';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useRouter } from '@/navigation';
 import { copy } from '@/utils/share';
+import { formatAddress, lnurl_encode, useConfig, useIdentity } from '@lawallet/react';
+import { useTranslations } from 'next-intl';
 
 // Components
-import { QRCode } from '@/components/UI';
 import Navbar from '@/components/Layout/Navbar';
+import { QRCode } from '@/components/UI';
 import InvoiceSheet from './components/InvoiceSheet';
 
 // Constans
-import { EMERGENCY_LOCK_DEPOSIT } from '@/constants/constants';
+import { EMERGENCY_LOCK_DEPOSIT } from '@/utils/constants';
 
 export default function Page() {
   const router = useRouter();
@@ -32,10 +32,8 @@ export default function Page() {
 
   const config = useConfig();
   const t = useTranslations();
+  const identity = useIdentity();
   const notifications = useNotifications();
-  const {
-    account: { identity },
-  } = useWalletContext();
 
   const [isOpenSheet, setIsOpenSheet] = useState<boolean>(false);
 
@@ -52,7 +50,7 @@ export default function Page() {
     () =>
       lnurl_encode(
         `${config.endpoints.lightningDomain}/.well-known/lnurlp/${
-          identity.data.username ? identity.data.username : identity.data.npub
+          identity.username ? identity.username : identity.npub
         }`,
       ).toUpperCase(),
     [identity],
@@ -62,14 +60,14 @@ export default function Page() {
     <>
       <Navbar showBackPage={true} title={t('DEPOSIT')} />
 
-      {identity.data.username.length ? (
+      {identity.username.length ? (
         <>
           <Flex flex={1} justify="center" align="center">
             <QRCode
               size={300}
               borderSize={30}
               value={('lightning:' + LNURLEncoded).toUpperCase()}
-              textToCopy={`${identity.data.username}@${normalizeLNDomain(config.endpoints.lightningDomain)}`}
+              textToCopy={identity.lud16}
             />
           </Flex>
           <Flex>
@@ -82,24 +80,14 @@ export default function Page() {
                     {t('USER')}
                   </Text>
                   <Flex>
-                    <Text>
-                      {identity.data.username
-                        ? `${identity.data.username}@${normalizeLNDomain(config.endpoints.lightningDomain)}`
-                        : formatAddress(LNURLEncoded, 20)}
-                    </Text>
+                    <Text>{identity.lud16 ? identity.lud16 : formatAddress(LNURLEncoded, 20)}</Text>
                   </Flex>
                 </Flex>
                 <div>
                   <Button
                     size="small"
                     variant="bezeled"
-                    onClick={() =>
-                      handleCopy(
-                        identity.data.username
-                          ? `${identity.data.username}@${normalizeLNDomain(config.endpoints.lightningDomain)}`
-                          : LNURLEncoded,
-                      )
-                    }
+                    onClick={() => handleCopy(identity.lud16 ? identity.lud16 : LNURLEncoded)}
                   >
                     {t('COPY')}
                   </Button>
@@ -129,7 +117,9 @@ export default function Page() {
         </>
       ) : null}
 
-      <InvoiceSheet isOpen={isOpenSheet} onClose={() => setIsOpenSheet(false)} handleCopy={handleCopy} />
+      {isOpenSheet && (
+        <InvoiceSheet isOpen={isOpenSheet} onClose={() => setIsOpenSheet(false)} handleCopy={handleCopy} />
+      )}
     </>
   );
 }

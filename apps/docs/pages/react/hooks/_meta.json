@@ -1,7 +1,4 @@
 {
-    "useAccount": {
-        "display": "hidden"
-    },
     "useBalance": {
         "display": "hidden"
     },
@@ -9,12 +6,6 @@
         "display": "hidden"
     },
     "useIdentity": {
-        "display": "hidden"
-    },
-    "useInvoice": {
-        "display": "hidden"
-    },
-    "useLNURL": {
         "display": "hidden"
     },
     "useNostr": {

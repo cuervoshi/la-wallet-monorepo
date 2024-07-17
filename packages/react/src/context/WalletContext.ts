@@ -1,50 +1,66 @@
+import type { UserIdentity } from '@lawallet/utils';
+import { type ConfigParameter, type TokenBalance, type Transaction } from '@lawallet/utils/types';
 import * as React from 'react';
-import { useCurrencyConverter, type UseConverterReturns } from '../hooks/useCurrencyConverter.js';
-import { useSettings, type UseSettingsReturns } from '../hooks/useSettings.js';
-import { useAccount, type UseAccountReturns } from '../hooks/useAccount.js';
-import { type ConfigParameter } from '@lawallet/utils/types';
-import { useNostrContext } from './NostrContext.js';
+import { useBalance } from '../hooks/useBalance.js';
 import { useConfig } from '../hooks/useConfig.js';
+import { useCurrencyConverter, type UseConverterReturns } from '../hooks/useCurrencyConverter.js';
+import { useIdentity } from '../hooks/useIdentity.js';
+import { useSettings, type UseSettingsReturns } from '../hooks/useSettings.js';
+import { useTransactions } from '../hooks/useTransactions.js';
+import { useNostr } from './NostrContext.js';
 
-interface WalletContextType {
-  account: UseAccountReturns;
+interface WalletContextReturns {
+  identity: UserIdentity;
+  transactions: Transaction[];
+  balance: TokenBalance;
   settings: UseSettingsReturns;
   converter: UseConverterReturns;
 }
 
-export const WalletContext = React.createContext({} as WalletContextType);
+type WalletContextParams = React.PropsWithChildren<ConfigParameter>;
+export const WalletContext = React.createContext({} as WalletContextReturns);
 
-export function WalletProvider(props: React.PropsWithChildren<ConfigParameter>) {
+export function WalletProvider(props: WalletContextParams) {
   const config = useConfig(props);
-  const { signerInfo, authWithPrivateKey } = useNostrContext({ config });
+  const { signerInfo } = useNostr({ config });
+  const [enableSubscriptions, setEnableSubscriptions] = React.useState<boolean>(false);
 
-  const account: UseAccountReturns = useAccount({ pubkey: signerInfo?.pubkey ?? '', config });
+  const identity = useIdentity({ pubkey: signerInfo?.pubkey ?? '', config });
+
+  const transactions = useTransactions({
+    pubkey: identity.pubkey,
+    enabled: enableSubscriptions,
+    storage: true,
+    config,
+  });
+
+  const balance = useBalance({
+    pubkey: identity.pubkey,
+    tokenId: 'BTC',
+    enabled: enableSubscriptions,
+    config,
+  });
+
   const settings: UseSettingsReturns = useSettings();
   const converter: UseConverterReturns = useCurrencyConverter();
 
+  React.useEffect(() => {
+    setEnableSubscriptions(Boolean(identity.pubkey.length));
+  }, [identity.pubkey]);
+
   const value = {
-    account,
+    identity,
+    transactions,
+    balance,
     settings,
     converter,
   };
 
-  React.useEffect(() => {
-    const {
-      data: { privateKey },
-      isLoading,
-    } = account.identity;
-
-    if (!isLoading && privateKey) authWithPrivateKey(privateKey);
-  }, [account.identity.data.privateKey]);
-
   return React.createElement(WalletContext.Provider, { value }, props.children);
 }
 
-export const useWalletContext = () => {
+export const useLaWallet = () => {
   const context = React.useContext(WalletContext);
-  if (!context) {
-    throw new Error('useWalletContext must be used within WalletProvider');
-  }
 
   return context;
 };

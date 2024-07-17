@@ -1,8 +1,6 @@
 import React from 'react';
 
 import { LinkButtonProps } from './types';
-
-import { baseTheme } from '../../theme';
 import { LinkButtonPrimitive } from './style';
 import { useTheme } from 'styled-components';
 
