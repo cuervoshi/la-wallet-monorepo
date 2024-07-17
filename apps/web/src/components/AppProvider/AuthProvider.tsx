@@ -55,8 +55,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const storageIdentity = await config.storage.getItem(STORAGE_IDENTITY_KEY);
 
       if (storageIdentity) {
-        const parsedIdentity: StoragedIdentityInfo[] = parseContent(storageIdentity as string);
-        const auth: boolean = await authenticate(parsedIdentity[0]?.privateKey);
+        const parsedIdentity: StoragedIdentityInfo = parseContent(storageIdentity as string);
+        const auth: boolean = await authenticate(parsedIdentity?.privateKey);
         return auth;
       } else {
         identity.reset();
@@ -134,6 +134,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (isLoading) return false;
 
     const pathSegment = `/${String(pathname.split('/')[1] ?? '')}`;
+
     const requireAuth: boolean = isProtectedRoute(pathSegment, AppRouter.connectedPaths);
     const requireDisconnectedUser: boolean = isProtectedRoute(pathSegment, AppRouter.disconnectedPaths);
 
